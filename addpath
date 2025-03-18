@@ -1,0 +1,51 @@
+#!/bin/bash
+
+clean_path() {
+    echo "$1" | sed 's/\x1b\[[0-9;]*m//g'
+}
+
+center() {
+    local text="$1"
+    local width
+    width=$(tput cols)
+    printf "%*s\n" $(((${#text} + width) / 2)) "$text"
+}
+
+PINK=$(tput setaf 13)
+NC=$(tput sgr0)
+
+if [ -z "$1" ]; then
+    clear
+    center "${PINK}addPath - Lilith Ivey${NC}"
+    center "Usage: $0 /path/to/directory"
+    center "${PINK}Current PATH directories:${NC}"
+    center "===================="
+    echo "$PATH" | tr ':' '\n' | while read -r dir; do
+        center "$dir"
+    done
+    center "===================="
+    exit 1
+fi
+
+DIR="$1"
+
+if [ ! -d "$DIR" ]; then
+    echo "Error: '$DIR' doesn't exist."
+    exit 1
+fi
+
+if [[ ":$PATH:" == *":$DIR:"* ]]; then
+    echo "'$DIR' is already in PATH."
+    exit 0
+fi
+
+export PATH="$DIR:$PATH"
+echo "Added '$DIR' to PATH."
+
+RC_FILE="$HOME/.bashrc"
+[ -n "$ZSH_VERSION" ] && RC_FILE="$HOME/.zshrc"
+
+echo "export PATH=\"$DIR:\$PATH\"" >> "$RC_FILE"
+echo "Update saved to $RC_FILE. Restart shell or 'source $RC_FILE'."
+
+exit 0
